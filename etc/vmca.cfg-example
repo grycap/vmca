@@ -1,0 +1,94 @@
+[GENERAL]
+# The debugging level (debug, info, error)
+DEBUG_LEVEL=debug
+
+# The log file in which the log messages are stored (make sure that the user that runs VMCA has write permissions)
+LOG_FILE=/var/log/vmca.log
+
+# List of hosts whose machines do not need to be moved (e.g. nodes that will not be powered off)
+DISABLED_HOSTS=
+
+# Seconds while the VMs should be in the running state, in the same host, to be considered as stable
+STABLE_TIME=7200
+
+# Seconds between calls to the defragger
+DEFRAGGER_FREQUENCY=600
+
+# Set to True in case that you want to make the migrations (otherwise the migration plan will not be executed)
+ENABLE_MIGRATION=False
+
+# Set to True if you want that the VMs are considered stable when VMCA is started
+CONSIDER_VMS_STABLE_ON_STARTUP=False
+
+[ONE]
+# --------------------------------------------------------
+#
+# OpenNebula specific configuration
+#
+# Parameters to limit migration of VM between ONE hosts. These are specific of
+# the deployment_one deployment. If you are not using it, please ignore them.
+#
+# --------------------------------------------------------
+
+# Contact string for the XML-RPC ONE interface
+ONE_XMLRPC=http://localhost:2633/RPC2
+
+# Authentication string for the XML-RPC ONE interface
+# * make sure that the user has access to the VM list and he can migrate the VMs
+ONE_AUTH=vmca:vmcapass
+
+# The VMs that are created from to these template ids must not be moved (e.g. 0,5)
+LOCKED_TEMPLATES=
+
+# The VMs that belong to these user ids must not be moved (e.g. 0,5)
+LOCKED_VM_UID=6
+
+# The VMs that belong to these group ids must not be moved (e.g. 0,5)
+LOCKED_VM_GID=
+
+# The VMs with IDs in the list must not be moved (e.g. [ 1, 152, 3 ])
+LOCKED_VM_IDS=
+
+[FUTURE]
+# ------------------------------------------------------------------------------
+# Variables for FUTURE releases (not implemented)
+# ------------------------------------------------------------------------------
+# TODO: not yet implemented
+#
+# Memory threshold (leave at least this memory in hosts shares) when moving a VM
+# to a real host
+#
+# Tip: set to 0 to disable this setting
+# SPARE_MEMORY = 0
+
+# TODO: not yet implemented
+#
+# CPU threshold (leave at least this CPUs in hosts shares) when moving a VM to a
+# real host
+#
+# Tip: set to 0 to disable this setting
+# SPARE_CPU = 0
+
+# TODO: not yet implemented
+#
+# CPU usage (percentage between 0 and 100) to consider that the node's VM should
+# not be moved. This is used to consider that a node is in a stable state
+#
+# Tip: set to 100 to disable this setting
+# CPU_MIN = 100
+
+# TODO: not yet implemented
+#
+# Memory usage (percentage between 0 and 100) to consider that the node's VM should
+# not be moved. This is used to consider that a node is in a stable state
+#
+# Tip: set to 100 to disable this setting
+# MEMORY_MIN = 100
+
+# TODO: not yet implemented
+#
+# Number of Virtual Machines to consider that the node's VM should not be moved.
+# This is used to consider that a node is in a stable state
+#
+# Tip: set to -1 to disable this setting
+# VM_MIN = -1
