@@ -16,13 +16,57 @@ One of the main objectives of the VMCA is getting real hosts free from VMs. Usin
 
 VMCA is currently working in conjunction with OpenNebula (it has been tested with ONE 4.8). Futher releases will integrate with OpenStack.
 
-## Prerrequisites
+## Dependencies
 
 Make sure that you have installed ```cpyutils``` package from https://github.com/grycap/cpyutils
 
 ## Installing
 
-The current installation is source-code based. So you simply have to choose a folder in which VMCA is being installed (for now on it will be /usr/local/vmca) and execute (as root):
+You have to obtain the source code in a temporary folder and execute (as root):
+
+```
+$ cd /tmp
+$ git clone https://github.com/grycap/vmca
+$ cd vmca
+$ python setup.py install --record installed-files.txt
+$ cp ./etc/vmca.cfg-example /etc/vmca.cfg
+$ chmod 600 /etc/vmca.cfg
+$ touch /var/log/vmca.log
+```
+
+In particular, to integrate with ONE, you will need to have one user in the ```oneadmin``` group (e.g. vmcauser).
+
+```
+$ oneuser create vmca vmcapass
+```
+
+Now you should adjust the file ```/etc/vmca.cfg``` to your settings. In particular, to work with ONE you will need to set the ```ONE_XMLRPC``` and ```ONE_AUTH``` variables.
+
+Once ready, you can start VMCA by simply executing
+
+```
+$ vmcad start
+```
+
+## Debugging (in case that it does not start)
+
+You can see what happens in ```/var/log/vmca.log```. In case that you cannot make vmca run, you can set ```LOG_FILE=``` in the configuration file and start vmca.py using the commandline ```vmca.py```
+
+## Running VMCA as other user
+
+If you want to run VMCA with other user than root, you must give the permissions to the ```/etc/vmca.cfg``` and ```/var/log/vmca.log``` files, by executing (as root):
+
+```
+$ chown vmcauser:root /etc/vmca.cfg /var/log/vmca.log
+$ chmod 644 /var/log/vmca.log
+$ chmod 600 /etc/vmca.cfg
+```
+
+Then you should modify the command ```vmcad``` to start the application as other user.
+
+## Installing as source-code
+
+You simply have to choose a folder in which VMCA is being installed (for now on it will be /usr/local/vmca) and execute (as root):
 
 ```
 $ cd /usr/local
@@ -35,7 +79,7 @@ $ touch /var/log/vmca.log
 In particular, to integrate with ONE, you will need to have one user in the ```oneadmin``` group (e.g. vmcauser).
 
 ```
-$ oneuser create vmca vmcapass --sha1
+$ oneuser create vmca vmcapass
 ```
 
 Now you should adjust the file ```/etc/vmca.cfg``` to your settings. In particular, to work with ONE you will need to set the ```ONE_XMLRPC``` and ```ONE_AUTH``` variables.
@@ -46,7 +90,7 @@ Once ready, you can start VMCA by simply executing
 $ python /usr/local/vmca/vmca.py
 ```
 
-## Running VMCA with other user
+## Running VMCA as other user
 
 If you want to run VMCA with other user than root, you must give the permissions to the ```/etc/vmca.cfg``` and ```/var/log/vmca.log``` files, by executing (as root):
 
