@@ -163,6 +163,17 @@ class HostData:
 class CannotNormalizeException(Exception): pass
 
 class HostsInfo():
+    def stabilize_vms(self, min_stable_time, hosts_affected = []):
+        if hosts_affected is None:
+            return
+        
+        for h_id in hosts_affected:
+            if h_id in hosts_affected:
+                h = self._hosts_info[h_id]
+                for vm in h.vm_list:
+                    vm.timestamp_state = vm.timestamp_state - min_stable_time
+                    vm.state = VMData.STATE_RUNNING
+    
     def normalize_resources(self):
         self._max_cpu = 0
         self._max_memory = 0

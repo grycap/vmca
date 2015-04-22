@@ -18,7 +18,7 @@
 # 
 import cpyutils.config 
 
-cpyutils.config.set_paths([ './etc/', '/etc/' ])
+cpyutils.config.set_paths([ './etc/', '/etc/vmca/', '/etc/' ])
 cpyutils.config.set_main_config_file("vmca.cfg")
 
 class ONEConfig(cpyutils.config.Configuration):
@@ -76,7 +76,10 @@ config_vmca = VMCAConfig(
         "WEIGHT_MEM": 1,
         "WEIGHT_CPU": 1,
         "ENABLE_MIGRATION": False,
-        "CONSIDER_VMS_STABLE_ON_STARTUP": False
+        "CONSIDER_VMS_STABLE_ON_STARTUP": False,
+        "XMLRPC_PORT": 9999,
+        "XMLRPC_HOST": "localhost",
+        "MONITORIZATION_VALIDITY": 10
     },
     callback = VMCAConfig.parse
 )

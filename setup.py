@@ -18,14 +18,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 # 
 from distutils.core import setup
+from version import VERSION
 
 setup(name='VMCA',
-      version='0.90b1',
+      version=VERSION,
       description='Virtual Machine Consolidation Agent (VMCA)',
       author='Carlos de Alfonso',
       author_email='caralla@upv.es',
       url='http://www.grycap.upv.es/clues',
-      py_modules = [ 'bestfit', 'config', 'defragger', 'deployment', 'firstfit', 'one', 'schedule', 'vmcad', 'vmca' ],
+      py_modules = [ 'bestfit', 'config', 'defragger', 'deployment', 'firstfit', 'one', 'schedule', 'version', 'vmcaserver' ],
+      scripts = [ 'vmca', 'vmcad.py', 'vmcad' ],
       data_files = [ ('/etc/default/', ['etc/vmca.cfg-example'] ) ],
       download_url = 'https://github.com/grycap/vmca',
       install_requires = [ 'cpyutils >= 0.01' ]

@@ -77,7 +77,7 @@ class Deployment:
                 hosts_info[h_id].add_vm(vm)
             else:
                 logging.warning("VM %s is supposed to be located into the non existing host %s" % (vm_id, h_id))
-        
+                
     def migrate_vm(self, vmid, host_src, host_dst):
         """
         @description Migrates a VM to another host
@@ -101,75 +101,75 @@ class Deployment:
         else:
             return False
 
-    def _detect_stable_vms(self):
-        now = cpyutils.eventloop.now()
-
-        stable_vms = []
-        for vm_id, vm_assign in self._vm2host.items():
-            if (vm_assign.state == defragger.VMData.STATE_RUNNING) and ((now - vm_assign.timestamp) > config.STABLE_VM_TIME):
-                stable_vms.append(vm_id)
-            else:
-                logging.debug("vm %s is not stable yet")
-                
-        return stable_vms
-
-    def _detect_stable_hosts(self):
-        stable_vms = self._detect_stable_vms()
-        stable_hosts = []
-    
-        for h_id, h in self._hosts_info.items():
-            host_stable = True
-            for vm in h.vm_list:
-                if vm.id not in stable_vms:
-                    host_stable = False
-                    break
-            if host_stable:
-                stable_hosts.append(h_id)
-
-        return stable_hosts
-
-    def get_candidates(self):
-        """
-        @description Obtains the host candidates whose VM can be moved to other
-            hosts
-        @return candidate_hosts A list of hostnames whose VM can be moved to
-            other hosts
-        """
-        candidate_hosts = [ ]
-        stable_hosts = self._detect_stable_hosts()
-
-        for hostname, hostdata in self._hosts_info.items():
-            if (hostname not in config.DISABLED_HOSTS) and (hostname in stable_hosts):
-                remove_host = False
-                
-                stats = hostdata.get_stats()
-
-                if stats.cpu_usage > (config.CPU_MIN / 100.0):
-                    remove_host = True
-                    
-                if stats.mem_usage > (config.MEMORY_MIN / 100.0):
-                    remove_host = True
-
-                if (config.VM_MIN > -1) and (stats.vm_count > config.VM_MIN):
-                    remove_host = True
-
-                if remove_host:
-                    logging.debug("excluding host (%s) because it is stable right now (%s)" % (hostname, stats))
-                else:
-                    candidate_hosts.append(hostname)
-        
-        return candidate_hosts
-
-    def get_replaceable_vms(self):
-        """
-        @description Obtains the vm that can be moved to other host
-        @return replaceable_vm A list of VM ids that can be moved to other hosts
-        """
-        candidate_hosts = self.get_candidates()
-        stable_vms = self._detect_stable_vms()
-
-        replaceable_vm = [ vmid for vmid, vmdata in self._vms_info if vmdata.id in stable_vms and vmdata.hostname in candidate_hosts ]
-        return replaceable_vm
+    #def _detect_stable_vms(self):
+    #    now = cpyutils.eventloop.now()
+    #
+    #    stable_vms = []
+    #    for vm_id, vm_assign in self._vm2host.items():
+    #        if (vm_assign.state == defragger.VMData.STATE_RUNNING) and ((now - vm_assign.timestamp) > config.STABLE_VM_TIME):
+    #            stable_vms.append(vm_id)
+    #        else:
+    #            logging.debug("vm %s is not stable yet")
+    #            
+    #    return stable_vms
+    #
+    #def _detect_stable_hosts(self):
+    #    stable_vms = self._detect_stable_vms()
+    #    stable_hosts = []
+    #
+    #    for h_id, h in self._hosts_info.items():
+    #        host_stable = True
+    #        for vm in h.vm_list:
+    #            if vm.id not in stable_vms:
+    #                host_stable = False
+    #                break
+    #        if host_stable:
+    #            stable_hosts.append(h_id)
+    #
+    #    return stable_hosts
+    #
+    #def get_candidates(self):
+    #    """
+    #    @description Obtains the host candidates whose VM can be moved to other
+    #        hosts
+    #    @return candidate_hosts A list of hostnames whose VM can be moved to
+    #        other hosts
+    #    """
+    #    candidate_hosts = [ ]
+    #    stable_hosts = self._detect_stable_hosts()
+    #
+    #    for hostname, hostdata in self._hosts_info.items():
+    #        if (hostname not in config.DISABLED_HOSTS) and (hostname in stable_hosts):
+    #            remove_host = False
+    #            
+    #            stats = hostdata.get_stats()
+    #
+    #            if stats.cpu_usage > (config.CPU_MIN / 100.0):
+    #                remove_host = True
+    #                
+    #            if stats.mem_usage > (config.MEMORY_MIN / 100.0):
+    #                remove_host = True
+    #
+    #            if (config.VM_MIN > -1) and (stats.vm_count > config.VM_MIN):
+    #                remove_host = True
+    #
+    #            if remove_host:
+    #                logging.debug("excluding host (%s) because it is stable right now (%s)" % (hostname, stats))
+    #            else:
+    #                candidate_hosts.append(hostname)
+    #    
+    #    return candidate_hosts
+    #
+    #def get_replaceable_vms(self):
+    #    """
+    #    @description Obtains the vm that can be moved to other host
+    #    @return replaceable_vm A list of VM ids that can be moved to other hosts
+    #    """
+    #    candidate_hosts = self.get_candidates()
+    #    stable_vms = self._detect_stable_vms()
+    #
+    #    replaceable_vm = [ vmid for vmid, vmdata in self._vms_info if vmdata.id in stable_vms and vmdata.hostname in candidate_hosts ]
+    #    return replaceable_vm
 
     def get_migrating_vms(self):
         '''
