@@ -20,6 +20,12 @@ ENABLE_MIGRATION=False
 # Set to True if you want that the VMs are considered stable when VMCA is started
 CONSIDER_VMS_STABLE_ON_STARTUP=False
 
+# The host in which VMCA will listen for cli queries
+XMLRPC_HOST=localhost
+
+# The port in which VMCA will listen for cli queries
+XMLRPC_PORT=9999
+
 [ONE]
 # --------------------------------------------------------
 #

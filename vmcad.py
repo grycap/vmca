@@ -39,19 +39,8 @@ def getplan():
     return True, DAEMON.get_migration_plan()
 
 def vmca_server_functions():
-    import cpyutils.rpcweb
-    class vmca_web_server(cpyutils.rpcweb.web_server):
-        pass
-
-    server = cpyutils.rpcweb.get_dispatcher()
-
-    # Production
-    server.register_function(version)
-    server.register_function(forcerun)
-    server.register_function(getplan)
-
-    # rpcweb.start_server(clues_web_server, port=8000)
-    cpyutils.rpcweb.start_server_in_thread(vmca_web_server, port = config.config_vmca.XMLRPC_PORT)
+    import cpyutils.xmlrpcutils
+    cpyutils.xmlrpcutils.create_xmlrpc_server_in_thread(config.config_vmca.XMLRPC_HOST, config.config_vmca.XMLRPC_PORT, [version, forcerun, getplan])
 
 def main_loop():
     DEBUG_MODE = True
