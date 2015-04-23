@@ -209,7 +209,7 @@ class Daemon(object):
                 
         self._lock.release()
 
-    def clean_hosts(self, host_list = [], override_fixed_vms = False):
+    def clean_hosts(self, host_list = [], override_fixed_vms = False, can_use_empty_hosts = False):
         _LOGGER.info("forcing cleaning hosts...")
         self._lock.acquire()
 
@@ -227,7 +227,9 @@ class Daemon(object):
 
         new_hosts_info.stabilize_vms(config.config_vmca.STABLE_TIME, host_list)
         # new_migration_plan = []
+        used_empty_hosts = self._defragger.can_use_empty_hosts_as_destination(can_use_empty_hosts)
         new_migration_plan = self._defragger.defrag(new_hosts_info, hosts_fixed = forcing_hosts_fixed, fixed_vms = forcing_fixed_vms)
+        self._defragger.can_use_empty_hosts_as_destination(used_empty_hosts)
 
         retval = ""
         if (new_migration_plan is None) or (len(new_migration_plan) == 0):

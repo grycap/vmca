@@ -25,14 +25,15 @@ def version():
     from version import VERSION
     return True, VERSION
 
-def forcerun(nodenames=[], override=False):
+def forcerun():
     global DAEMON
-    if len(nodenames) == 0:
-        DAEMON.forcerun()
-        return True, "run forced"
-    else:
-        result, text = DAEMON.clean_hosts(nodenames, override)
-        return result, text
+    DAEMON.forcerun()
+    return True, "run forced"
+
+def cleanhosts(nodenames=[], override=False, canuseempty=False):
+    global DAEMON
+    result, text = DAEMON.clean_hosts(nodenames, override, canuseempty)
+    return result, text
         
 def getplan():
     global DAEMON
@@ -40,7 +41,7 @@ def getplan():
 
 def vmca_server_functions():
     import cpyutils.xmlrpcutils
-    cpyutils.xmlrpcutils.create_xmlrpc_server_in_thread(config.config_vmca.XMLRPC_HOST, config.config_vmca.XMLRPC_PORT, [version, forcerun, getplan])
+    cpyutils.xmlrpcutils.create_xmlrpc_server_in_thread(config.config_vmca.XMLRPC_HOST, config.config_vmca.XMLRPC_PORT, [version, forcerun, getplan, cleanhosts])
 
 def main_loop():
     DEBUG_MODE = True

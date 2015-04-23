@@ -422,6 +422,14 @@ class Evaluated_VMMigration_List:
         # return "vm [%s] from [%s] to [%s] with cost [%f] and reward [%f]" % (self.vmid, self.host_src, self.host_dst, self.cost, self.reward)
     
 class Defragger_Base():
+    def __init__(self):
+        self._can_use_empty_hosts_as_destination=False
+        
+    def can_use_empty_hosts_as_destination(self, can_use):
+        retval = self._can_use_empty_hosts_as_destination
+        self._can_use_empty_hosts_as_destination = can_use
+        return retval
+    
     def _make_migrations(self, hosts_info, migration_list):
         if len(migration_list) > 0:
             for vm_movement in migration_list:
@@ -568,7 +576,10 @@ class Defragger_Base():
         * other use e.g. we can get out those nodes that are offline, or include the nodes that are
           offline and are likely to host that VM
         '''
-        return [ h_id for h_id in possible_destinations if (h_id != vmdata.hostname) and (len(hosts_info[h_id].vm_list) > 0) ]
+        if self._can_use_empty_hosts_as_destination:
+            return [ h_id for h_id in possible_destinations if (h_id != vmdata.hostname) ]
+        else:
+            return [ h_id for h_id in possible_destinations if (h_id != vmdata.hostname) and (len(hosts_info[h_id].vm_list) > 0) ]
 
     def _sort_vms(self, vm_list):
         '''
