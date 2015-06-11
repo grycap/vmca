@@ -58,16 +58,32 @@ class Daemon(object):
         self._migration_plan_event_id = None
         self._timestamp_start_migration_plan = 0
         self._timestamp_end_migration_plan = 0
+        self._timestamp_last_migration = 0
         
-    
         # The migration plan
         self._lock = threading.Lock()
         self._migration_plan = None
             
+    def dump_data(self):
+        hosts_str = ""
+        if self._hosts_info is None:
+            return "None"
+        
+        for h_id, h in self._hosts_info.items():
+            vm_str = ""
+            for vm in h.vm_list:
+                vm_str = "%s\t%s\n" % (vm_str, str(vm))
+            
+            h_line = "%s\n%s" % (str(h), vm_str)
+            hosts_str = "%s%s\n" % (hosts_str, h_line)
+        
+        retval = "hostsinfo@%s:\n%s" % (self._hosts_info_timestamp, hosts_str)
+        return retval
+            
     def _cancel_migration_plan(self):
         self._migration_plan = None
         if self._migration_plan_event_id is not None:
-            cpyutils.eventloop.get_eventloop().cancel_event(self._migration_plan_event_id)
+            cpyutils.eventloop.get_eventloop().cancel_event(self._migration_plan_event_id.id)
             self._migration_plan_event_id = None
         self._timestamp_end_migration_plan = cpyutils.eventloop.now()
         
@@ -75,13 +91,23 @@ class Daemon(object):
         self._migration_plan = migration_plan
         self._continue_migration_plan()
         self._timestamp_start_migration_plan = None
+        self._timestamp_last_migration = 0
     
     def _continue_migration_plan(self):
         if self._migration_plan is not None:
-            self._migration_plan_event_id = cpyutils.eventloop.get_eventloop().add_event(config.config_vmca.MIGRATION_PLAN_FREQUENCY, "Migration plan", callback = self.execute_migration_plan, arguments = [], stealth = True)
+            if self._migration_plan_event_id is None:
+                self._migration_plan_event_id = cpyutils.eventloop.get_eventloop().add_event(config.config_vmca.MIGRATION_PLAN_FREQUENCY, "Migration plan", callback = self.execute_migration_plan, arguments = [], stealth = False)
             
     def execute_migration_plan(self):
+        NOW = cpyutils.eventloop.now()
         self._lock.acquire()
+        self._migration_plan_event_id = None
+
+        if (NOW - self._timestamp_last_migration) < config.config_vmca.COOLDOWN_MIGRATION:
+            _LOGGER.debug("cooling down migrations")
+            self._continue_migration_plan()
+            self._lock.release()
+            return
 
         if not config.config_vmca.ENABLE_MIGRATION:
             _LOGGER.info("we are not executing the migration plan because of ENABLE_MIGRATION is disabled")
@@ -122,7 +148,7 @@ class Daemon(object):
             # return 
             # Will try to execute
             if self._timestamp_start_migration_plan is None:
-                self._timestamp_start_migration_plan = cpyutils.eventloop.now()
+                self._timestamp_start_migration_plan = NOW
                 
             if len(self._migration_plan) > 0:
                 for migration_list in self._migration_plan[:]:
@@ -130,9 +156,10 @@ class Daemon(object):
                         movement = migration_list.pop(0)
                         logging.debug("will migrate: %s" % movement)
                         
-                        _LOGGER.info("(T: %.2f) %s" % (cpyutils.eventloop.now(), self._hosts_info.fancy_dump_info()))
+                        _LOGGER.info("(T: %.2f) %s" % (NOW, self._hosts_info.fancy_dump_info()))
                         self._hosts_info.make_movement(movement)
                         self._deployment.migrate_vm(movement.vmid, movement.host_src, movement.host_dst)
+                        self._timestamp_last_migration = NOW
                         break
                     else:
                         self._migration_plan.remove(migration_list)
@@ -200,7 +227,14 @@ class Daemon(object):
         self._set_hosts_info(new_hosts_info)
         # self._hosts_info = new_hosts_info
         
-        new_migration_plan = self._defragger.defrag(self._hosts_info, fixed_vms = self._deployment.get_locked_vms())
+        # Will lock those hosts that have more than N vms
+        locked_hosts = []
+        for h_id, h in self._hosts_info.items():
+            if len(h.vm_list) > config.config_vmca.MAX_MIGRATIONS_PER_HOST:
+                # _LOGGER.debug("locking host %s because it has too VMs hosted" % h_id)
+                locked_hosts.append(h_id)
+        
+        new_migration_plan = self._defragger.defrag(self._hosts_info, hosts_fixed = locked_hosts, fixed_vms = self._deployment.get_locked_vms())
     
         if (new_migration_plan is None) or (len(new_migration_plan) == 0):
             _LOGGER.debug("nothing to migrate")

@@ -392,7 +392,7 @@ class VMData:
         return new_vm
 
     def __str__(self):
-        return "id: %s; cpu: %f; memory: %.1f (hostname: %s)" % (self.id, self.cpu, self.memory, self.hostname)
+        return "VM %s@%s; cpu: %f; memory: %.1f (hostname: %s)" % (self.id, self.timestamp_state, self.cpu, self.memory, self.hostname)
 
 class VMMigration:
     def __init__(self, vmid, host_src, host_dst, cost, reward):

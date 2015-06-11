@@ -21,7 +21,7 @@
 APPLICATION=VMCA
 LOGFILE=/var/log/vmca/vmca.log
 PIDFILE=/var/lib/vmca/vmca.pid
-APP=vmcad.py
+APP=vmcadaemon
 DAEMON=$(which $APP)
 
 if [ "$DAEMON" == "" ]; then

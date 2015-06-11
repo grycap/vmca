@@ -69,7 +69,7 @@ config_vmca = VMCAConfig(
         "SPARE_CPU": 0,
         "SPARE_MEMORY": 0,
         "MAX_SIMULTANEOUS_MIGRATIONS": 1,
-        "MIGRATION_PLAN_FREQUENCY": 1,
+        "MIGRATION_PLAN_FREQUENCY": 10,
         "DEFRAGGER_FREQUENCY": 10,
         "DISABLED_HOSTS": "",
         "STABLE_TIME": 600,
@@ -79,7 +79,9 @@ config_vmca = VMCAConfig(
         "CONSIDER_VMS_STABLE_ON_STARTUP": False,
         "XMLRPC_PORT": 9999,
         "XMLRPC_HOST": "localhost",
-        "MONITORIZATION_VALIDITY": 10
+        "MONITORIZATION_VALIDITY": 10,
+        "COOLDOWN_MIGRATION": 10,
+        "MAX_MIGRATIONS_PER_HOST": 2,
     },
     callback = VMCAConfig.parse
 )

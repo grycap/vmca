@@ -39,9 +39,13 @@ def getplan():
     global DAEMON
     return True, DAEMON.get_migration_plan()
 
+def getinfo():
+    global DAEMON
+    return True, DAEMON.dump_data()
+
 def vmca_server_functions():
     import cpyutils.xmlrpcutils
-    cpyutils.xmlrpcutils.create_xmlrpc_server_in_thread(config.config_vmca.XMLRPC_HOST, config.config_vmca.XMLRPC_PORT, [version, forcerun, getplan, cleanhosts])
+    cpyutils.xmlrpcutils.create_xmlrpc_server_in_thread(config.config_vmca.XMLRPC_HOST, config.config_vmca.XMLRPC_PORT, [version, forcerun, getplan, cleanhosts, getinfo])
 
 def main_loop():
     DEBUG_MODE = True

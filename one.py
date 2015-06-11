@@ -61,8 +61,9 @@ class Deployment(deployment.Deployment):
             return None
 
         for h in hosts:
-            hi = HostONE(h)
-            self._hosts_info[hi.hostname] = hi
+            if h.STATE != h.DISABLED:
+                hi = HostONE(h)
+                self._hosts_info[hi.hostname] = hi
 
         vms = self._one.get_vms()
         
@@ -70,6 +71,10 @@ class Deployment(deployment.Deployment):
         self._migrating_vms = []
         self._locked_vms = []
         for vm in vms:
+            
+            if vm.STATE not in [cpyutils.oneconnect.VM.STATE_INIT, cpyutils.oneconnect.VM.STATE_PENDING, cpyutils.oneconnect.VM.STATE_HOLD, cpyutils.oneconnect.VM.STATE_ACTIVE]:
+                continue
+            
             # TODO: revisar esto de que el host sea None
             if len(vm.HISTORY_RECORDS.HISTORY) > 0:
                 vm.HISTORY_RECORDS.HISTORY.sort(lambda x : x.SEQ)
