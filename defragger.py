@@ -65,6 +65,14 @@ class HostData:
         self.norm_memory_total = 0.0
         self.keywords = {}
         
+    def reduce_capacity(self, cpu, memory, cpu_pct = 0, memory_pct = 0):
+        spare_cpu = max(cpu, math.ceil(float(self.cpu_total) * float(cpu_pct)/100.0))
+        spare_mem = max(memory, math.ceil(float(self.memory_total) * float(cpu_pct)/100.0))
+        self.cpu_free = max(0, self.cpu_free - spare_cpu)
+        self.cpu_total = max(0, self.cpu_total - spare_cpu)
+        self.memory_free = max(0, self.memory_free - spare_mem)
+        self.memory_total = max(0, self.memory_total - spare_mem)
+        
     def norm_str(self):
         return "CPU: %.1f/%.1f; MEM: %.1f/%.1f" % (self.norm_cpu_free, self.norm_cpu_total, self.norm_memory_free, self.norm_memory_total)
         
@@ -173,6 +181,10 @@ class HostsInfo():
                 for vm in h.vm_list:
                     vm.timestamp_state = vm.timestamp_state - min_stable_time
                     vm.state = VMData.STATE_RUNNING
+    
+    def reduce_capacity(self, cpu, memory, cpu_pct, memory_pct):
+        for h_id, hostdata in self._hosts_info.items():
+            hostdata.reduce_capacity(cpu, memory, cpu_pct, memory_pct)
     
     def normalize_resources(self):
         self._max_cpu = 0
@@ -305,6 +317,10 @@ class HostsInfo():
         h_dst = vm_movement.host_dst
 
         vm = self._hosts_info[h_src].get_vm_byid(vm_movement.vmid)
+        if vm is None:
+            logging.error("error trying to simulate movement %s could not retrieve the information about vm %s on host %s" % (vm_movement, vm_movement.vmid, h_src))
+            return
+            
         self._hosts_info[h_src].remove_vm(vm)
         self._hosts_info[h_dst].add_vm(vm)
         

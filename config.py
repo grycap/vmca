@@ -40,6 +40,10 @@ class ONEConfig(cpyutils.config.Configuration):
         self.LOCKED_VM_UID = ONEConfig.str2intlist(self.LOCKED_VM_UID)
         self.LOCKED_VM_GID = ONEConfig.str2intlist(self.LOCKED_VM_GID)
         self.LOCKED_VM_IDS = ONEConfig.str2intlist(self.LOCKED_VM_IDS)
+        self.ONLY_TEMPLATES = ONEConfig.str2intlist(self.ONLY_TEMPLATES)
+        self.ONLY_GIDS = ONEConfig.str2intlist(self.ONLY_GIDS)
+        self.ONLY_UIDS = ONEConfig.str2intlist(self.ONLY_UIDS)
+
 
 config_one = ONEConfig(
     "ONE",
@@ -50,6 +54,9 @@ config_one = ONEConfig(
         "LOCKED_VM_UID": "",
         "LOCKED_VM_GID": "",
         "LOCKED_VM_IDS": "",
+        "ONLY_TEMPLATES": "",
+        "ONLY_GIDS": "",
+        "ONLY_UIDS": "",
     },
     callback = ONEConfig.parse
 )
@@ -82,6 +89,11 @@ config_vmca = VMCAConfig(
         "MONITORIZATION_VALIDITY": 10,
         "COOLDOWN_MIGRATION": 10,
         "MAX_MIGRATIONS_PER_HOST": 2,
+        "MAX_MIGRATION_TIME": 300,
+        "SPARE_MEMORY": 0,
+        "SPARE_CPU": 0,
+        "SPARE_MEMORY_PCT": 0,
+        "SPARE_CPU_PCT": 0,
     },
     callback = VMCAConfig.parse
 )

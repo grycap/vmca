@@ -73,10 +73,11 @@ class Deployment:
                 
             vm.timestamp_state = self._vm2host[vm_id].timestamp
             
-            if h_id in hosts_info:
-                hosts_info[h_id].add_vm(vm)
-            else:
-                logging.warning("VM %s is supposed to be located into the non existing host %s" % (vm_id, h_id))
+            if h_id is not None:
+                if h_id in hosts_info:
+                    hosts_info[h_id].add_vm(vm)
+                else:
+                    logging.warning("VM %s is supposed to be located into the non existing host %s" % (vm_id, h_id))
                 
     def migrate_vm(self, vmid, host_src, host_dst):
         """

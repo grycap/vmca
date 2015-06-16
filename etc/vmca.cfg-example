@@ -14,6 +14,9 @@ STABLE_TIME=7200
 # Seconds between calls to the defragger
 DEFRAGGER_FREQUENCY=600
 
+# Seconds between calls to the migration plan monitoring once it has been started (there won't be any call if there is not any migration plan)
+MIGRATION_PLAN_FREQUENCY=10
+
 # Set to True in case that you want to make the migrations (otherwise the migration plan will not be executed)
 ENABLE_MIGRATION=False
 
@@ -25,6 +28,25 @@ XMLRPC_HOST=localhost
 
 # The port in which VMCA will listen for cli queries
 XMLRPC_PORT=9999
+
+# The maximum number of VMs that a host can contain to be considered
+MAX_MIGRATIONS_PER_HOST=3
+
+# Memory threshold (leave at least this memory in hosts shares) when moving a VM to a real host (set to 0 to disable this setting)
+# If this value and the _PCT value are set, VMCA will use the greatest value
+SPARE_MEMORY = 0
+
+# Memory threshold in percentage of host resources (leave at least this memory in hosts shares) when moving a VM to a real host (set to 0 to disable this setting)
+# e.g. set 50 to get 50% of real resources free when moving VMs to the host. 
+SPARE_MEMORY_PCT = 0
+
+# CPU threshold (leave at least this CPUs in hosts shares) when moving a VM to a real host (set to 0 to disable this setting)
+# If this value and the _PCT value are set, VMCA will use the greatest value
+SPARE_CPU = 0
+
+# CPU threshold in percentage of host resources (leave at least this CPUs in hosts shares) when moving a VM to a real host (set to 0 to disable this setting).
+# e.g. set 50 to get 50% of real resources free when moving VMs to the host
+SPARE_CPU_PCT = 0
 
 [ONE]
 # --------------------------------------------------------
@@ -55,25 +77,21 @@ LOCKED_VM_GID=
 # The VMs with IDs in the list must not be moved (e.g. [ 1, 152, 3 ])
 LOCKED_VM_IDS=
 
+# Only migrate VMs that are based on the template ids contained in this list (e.g. 1,2) (deactivated if empty)
+ONLY_TEMPLATES=
+
+# Only migrate VMs that are owned by users in the group ids contained in this list (e.g. 1,2) (deactivated if empty)
+ONLY_GIDS=
+
+# Only migrate VMs that are owned by user ids contained in this list (e.g. 1,2) (deactivated if empty)
+ONLY_UIDS=
+
 [FUTURE]
 # ------------------------------------------------------------------------------
 # Variables for FUTURE releases (not implemented)
 # ------------------------------------------------------------------------------
 # TODO: not yet implemented
 #
-# Memory threshold (leave at least this memory in hosts shares) when moving a VM
-# to a real host
-#
-# Tip: set to 0 to disable this setting
-# SPARE_MEMORY = 0
-
-# TODO: not yet implemented
-#
-# CPU threshold (leave at least this CPUs in hosts shares) when moving a VM to a
-# real host
-#
-# Tip: set to 0 to disable this setting
-# SPARE_CPU = 0
 
 # TODO: not yet implemented
 #

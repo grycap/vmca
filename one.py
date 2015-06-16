@@ -89,7 +89,16 @@ class Deployment(deployment.Deployment):
                 if (vm.LCM_STATE == cpyutils.oneconnect.VM.LCM_RUNNING):
                     vmdata.state = defragger.VMData.STATE_RUNNING
                     if (vm.ID in config.config_one.LOCKED_VM_IDS) or (vm.UID in config.config_one.LOCKED_VM_UID) or (vm.GID in config.config_one.LOCKED_VM_GID) or (vm.TEMPLATE.TEMPLATE_ID in config.config_one.LOCKED_TEMPLATES):
-                        logging.debug("locking vm %s because of configuration" % vm.ID)
+                        # logging.debug("locking vm %s because of configuration" % vm.ID)
+                        self._locked_vms.append(vm.ID)
+                    if (len(config.config_one.ONLY_GIDS) > 0) and (vm.GID not in config.config_one.ONLY_GIDS):
+                        # logging.debug("locking vm %s because its GID is not allowed" % vm.ID)
+                        self._locked_vms.append(vm.ID)
+                    if (len(config.config_one.ONLY_UIDS) > 0) and (vm.UID not in config.config_one.ONLY_UIDS):
+                        # logging.debug("locking vm %s because its UID is not allowed" % vm.ID)
+                        self._locked_vms.append(vm.ID)
+                    if (len(config.config_one.ONLY_TEMPLATES) > 0) and (vm.TEMPLATE.TEMPLATE_ID not in config.config_one.ONLY_TEMPLATES):
+                        # logging.debug("locking vm %s because its TEMPLATE is not allowed" % vm.ID)
                         self._locked_vms.append(vm.ID)
                         
                 elif (vm.LCM_STATE in [ cpyutils.oneconnect.VM.LCM_PROLOG_MIGRATE, cpyutils.oneconnect.VM.LCM_SAVE_MIGRATE, cpyutils.oneconnect.VM.LCM_MIGRATE ]):
@@ -121,9 +130,9 @@ class Deployment(deployment.Deployment):
         logging.info("moving VM %s to %s" % (vm, host_dst))
         if (host_dst in self._hosts_info):
             
-            if ALREADY_MIGRATED:
-                logging.warning("we have already migrated one VM... enough for the moment")
-                return False
+            #if ALREADY_MIGRATED:
+            #    logging.warning("we have already migrated one VM... enough for the moment")
+            #    return False
 
             h_dst = self._hosts_info[host_dst]
             if self._one.migrate_vm(int(vmid), h_dst.ID, True):
