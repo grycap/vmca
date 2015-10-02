@@ -12,6 +12,12 @@ The Virtual Machine Consolidation Agent (VMCA) inspects your private Cloud deplo
 
 One of the main objectives of the VMCA is getting real hosts free from VMs. Using this agent in conjunction with CLUES it is possible to achieve a more efficient usage of the resources. Moreover we will save energy because those nodes that are not used by the virtualization platform will be powered off by CLUES.
 
+## Evacuating hosts
+
+Under some circumnstances, some hosts need to be powered off, rebooted, etc. due to maintenance. This is a problem when that host has some VMs running on it. VMCA can also be used to move the VMs from one host to the other hosts in the platform. Finally, when the host is free of VMs it can be powered off.
+
+OpenStack has a similar function called ```host-evacuate```, but it is needed to move all the instances from one specific host to exactly one host. VMCA will try to re-place the VMs using a deffragging algorithm (e.g. packing the VMs into the less number of hosts, distributing them, etc.). 
+
 # Installing
 
 VMCA is currently working in conjunction with OpenNebula (it has been tested with ONE 4.8). Futher releases will integrate with OpenStack.
@@ -101,3 +107,70 @@ $ chmod 600 /etc/vmca.cfg
 ```
 
 The you can su as the ```vmcauser``` user and start VMCA.
+
+# Using VMCA
+
+The standard distribution of VMCA incorporates the ```vmca``` CLI application, and the help of the command is very self-explanatory:
+
+```
+# vmca --help
+The VMCA command line utility
+
+Usage: vmca [-h] [getplan|forcerun|clean|version|info]
+
+	[-h|--help] - Shows this help
+	* Gets the current migration plan that is being carried out in the server
+	  Usage: getplan 
+
+	* Forces VMCA to analyze the platform immediately
+	  Usage: forcerun 
+
+	* Migrates all the VMs from one host
+	  Usage: clean [-f] [-e] <node>
+		[-f|--force] - Force cleaning even if the host has not its VMs in a stable state
+		[-e|--use-empty] - Use emtpy hosts as a possible destinations
+		<node> - Name of the host that is going to be cleaned
+
+	* Gets the version of the VMCA server
+	  Usage: version 
+
+	* Gets the monitoring information that has the VMCA server
+	  Usage: info 
+```
+
+## Evacuating a host
+
+In case that you want to power off a host, or you need to reboot it, you can move all its VMs to other hosts using VMCA. As an example, if you want to move all the VMs from 'torito03', the commandline will be:
+
+```
+# vmca clean torito03
+```
+
+The default behaviour of VMCA is not to use the hosts that are empty (as it tries to get hosts without any VM running on them). You can modify such behaviour and enable VMCA to use the empty hosts including the flag ```-e```.
+
+# Scenarios
+
+## VMCA is only needed to ocasionally evacuate hosts
+
+You can disable the periodical run of the deffragger by setting ```ENABLE_DEFRAGGER=False``` in the VMCA configuration file. Then the VMCA deffragger will never be automatically triggered, while it can be forced using the commandline.
+
+## The deffragger used to evacuate a host has to be different than the one used automatically
+
+In some cases you will need different defraggers for different purposes. E.g. you need an automatically defragger that packs the VMs into the hosts, but you want that when a host is evacuated, its VMs are homogenously distributed in the platform.
+
+While it is possible to implement in VMCA, currently there is not any _configuration based_ mechanism to make it. The solution is a bit tricky, as it is needed to modify the source-code to select which defragger will be used for each purpose.
+
+You should modify the file ```vmcad.py``` and locate the line that creates the daemon:
+
+```
+DAEMON = vmcaserver.Daemon(deployment, T(), T_clean())
+```
+
+The parameters for the Daemon class are the deployment (e.g. the ONE based), the automatic defragger (```T``` in the default implementation, and the defragger used to clean one host (```T_clean``` in the default implementation).
+
+You can create your own class or use a combination of the available criteria, as ```T``` and ```T_clean``` are created:
+
+```
+    class T(schedule.Scheduler_Packing, firstfit.SelectHost_LessVMs_First, firstfit.Defragger_FF): pass
+    class T_clean(schedule.Scheduler_Stripping, firstfit.SelectHost_LessVMs_First, firstfit.Defragger_FF): pass
+```
