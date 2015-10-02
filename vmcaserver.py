@@ -383,11 +383,16 @@ class MigrationPlan():
         self._lock.release()
 
 class Daemon(object):
-    def __init__(self, current_defragger, deployment):
+    def __init__(self, deployment, defragger_periodical, defragger_clean = None):
         self._monitor = Monitor(deployment)
         self._migration_plan = MigrationPlan(self._monitor)
         
-        self._defragger = current_defragger
+        self._defragger_periodical = defragger_periodical
+        self._defragger_clean = defragger_clean
+	if self._defragger_clean is None:
+	    self._defragger_clean = self._defragger_periodical
+
+
         self._deployment = deployment
         
         # The migration plan
@@ -443,7 +448,7 @@ class Daemon(object):
             # _LOGGER.debug("applying the spare threshold: CPU: %s or %s%%, MEM: %s or %s%%" % (config.config_vmca.SPARE_CPU, config.config_vmca.SPARE_CPU_PCT, config.config_vmca.SPARE_MEMORY, config.config_vmca.SPARE_MEMORY_PCT))
             new_hosts_info.reduce_capacity(config.config_vmca.SPARE_CPU, config.config_vmca.SPARE_MEMORY, config.config_vmca.SPARE_CPU_PCT, config.config_vmca.SPARE_MEMORY_PCT)
         
-        new_migration_plan = self._defragger.defrag(new_hosts_info, hosts_fixed = locked_hosts, fixed_vms = failed_vms + self._deployment.get_locked_vms())
+        new_migration_plan = self._defragger_periodical.defrag(new_hosts_info, hosts_fixed = locked_hosts, fixed_vms = failed_vms + self._deployment.get_locked_vms())
     
         if (new_migration_plan is None) or (len(new_migration_plan) == 0):
             _LOGGER.debug("nothing to migrate")
@@ -457,11 +462,20 @@ class Daemon(object):
         _LOGGER.info("forcing cleaning hosts...")
         self._lock.acquire()
 
+	if self._defragger_clean != self._defragger_periodical:
+	    _LOGGER.warning("Defragging with a different defragger from the periodical one")
+
         new_hosts_info = self._monitor.monitor()
         if new_hosts_info is None:
             _LOGGER.error("could not get information about the deployment... skipping cleaning hosts")
             self._lock.release()
             return False, "could not get information about the deployment"
+
+	for f in host_list:
+	    if f not in new_hosts_info.keys():
+		_LOGGER.error("tried to clean a host that is not in the deployment (%s)" % f)
+		self._lock.release()
+	        return False, "host %s is not in the deployment" % f
 
         forcing_hosts_fixed = [ f for f in new_hosts_info.keys() if f not in host_list ]
         if override_fixed_vms:
@@ -471,9 +485,9 @@ class Daemon(object):
             forcing_fixed_vms = failed_vms + self._deployment.get_locked_vms()
 
         new_hosts_info.stabilize_vms(config.config_vmca.STABLE_TIME, host_list)
-        used_empty_hosts = self._defragger.can_use_empty_hosts_as_destination(can_use_empty_hosts)
-        new_migration_plan = self._defragger.defrag(new_hosts_info, hosts_fixed = forcing_hosts_fixed, fixed_vms = forcing_fixed_vms)
-        self._defragger.can_use_empty_hosts_as_destination(used_empty_hosts)
+        used_empty_hosts = self._defragger_clean.can_use_empty_hosts_as_destination(can_use_empty_hosts)
+        new_migration_plan = self._defragger_clean.defrag(new_hosts_info, hosts_fixed = forcing_hosts_fixed, fixed_vms = forcing_fixed_vms)
+        self._defragger_clean.can_use_empty_hosts_as_destination(used_empty_hosts)
 
         retval = ""
         if (new_migration_plan is None) or (len(new_migration_plan) == 0):
@@ -499,5 +513,8 @@ class Daemon(object):
         
     def loop(self):
         cpyutils.eventloop.create_eventloop(True)
-        cpyutils.eventloop.get_eventloop().add_periodical_event(config.config_vmca.DEFRAGGER_FREQUENCY, -config.config_vmca.DEFRAGGER_FREQUENCY, "defrag", callback = self.defrag, arguments = [], stealth = True)
+	if config.config_vmca.ENABLE_DEFRAGGER:
+	        cpyutils.eventloop.get_eventloop().add_periodical_event(config.config_vmca.DEFRAGGER_FREQUENCY, -config.config_vmca.DEFRAGGER_FREQUENCY, "defrag", callback = self.defrag, arguments = [], stealth = True)
+	else:
+		_LOGGER.warning("automatic defragger is disabled. VMCA will only server to evacuate nodes")
         cpyutils.eventloop.get_eventloop().loop()

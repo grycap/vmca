@@ -64,6 +64,7 @@ def main_loop():
     import firstfit
     import vmcaserver
     class T(schedule.Scheduler_Packing, firstfit.SelectHost_LessVMs_First, firstfit.Defragger_FF): pass
+    class T_clean(schedule.Scheduler_Stripping, firstfit.SelectHost_LessVMs_First, firstfit.Defragger_FF): pass
     
     import one
     deployment = one.Deployment(config.config_one.ONE_XMLRPC, config.config_one.ONE_AUTH)
@@ -71,7 +72,7 @@ def main_loop():
     vmca_server_functions()
     
     global DAEMON
-    DAEMON = vmcaserver.Daemon(T(), deployment)
+    DAEMON = vmcaserver.Daemon(deployment, T(), T_clean())
     DAEMON.loop()    
 
 if __name__ == '__main__':

@@ -94,6 +94,7 @@ config_vmca = VMCAConfig(
         "SPARE_CPU": 0,
         "SPARE_MEMORY_PCT": 0,
         "SPARE_CPU_PCT": 0,
+	"ENABLE_DEFRAGGER": True,
     },
     callback = VMCAConfig.parse
 )

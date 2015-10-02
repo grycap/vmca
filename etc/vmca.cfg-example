@@ -11,8 +11,12 @@ DISABLED_HOSTS=
 # Seconds while the VMs should be in the running state, in the same host, to be considered as stable
 STABLE_TIME=7200
 
-# Seconds between calls to the defragger
-DEFRAGGER_FREQUENCY=600
+# Setting this variable to True, VMCA will periodically check the platform and try to move the VMs to a better distribution.
+# If this variable is set to False, VMCA will only be used to evacuate nodes using the commandline
+ENABLE_DEFRAGGER=True
+
+# Seconds between calls to the defragger (once an hour)
+DEFRAGGER_FREQUENCY=3600
 
 # Seconds between calls to the migration plan monitoring once it has been started (there won't be any call if there is not any migration plan)
 MIGRATION_PLAN_FREQUENCY=10
