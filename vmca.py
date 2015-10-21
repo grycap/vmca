@@ -45,7 +45,7 @@ class VMCACmdLine(CmdLineParser):
     def clean(self, result, error):
         force = (result.values["-f"])
         useempty = (result.values["-e"])
-	hosts = result.values["node"]
+        hosts = result.values["node"]
 
         succeed, text = self._proxy.cleanhosts(hosts, force, useempty)
         if succeed:

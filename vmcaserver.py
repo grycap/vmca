@@ -389,9 +389,8 @@ class Daemon(object):
         
         self._defragger_periodical = defragger_periodical
         self._defragger_clean = defragger_clean
-	if self._defragger_clean is None:
-	    self._defragger_clean = self._defragger_periodical
-
+        if self._defragger_clean is None:
+            self._defragger_clean = self._defragger_periodical
 
         self._deployment = deployment
         
@@ -462,20 +461,20 @@ class Daemon(object):
         _LOGGER.info("forcing cleaning hosts...")
         self._lock.acquire()
 
-	if self._defragger_clean != self._defragger_periodical:
-	    _LOGGER.warning("Defragging with a different defragger from the periodical one")
+        if self._defragger_clean != self._defragger_periodical:
+            _LOGGER.warning("Defragging with a different defragger from the periodical one")
 
         new_hosts_info = self._monitor.monitor()
         if new_hosts_info is None:
             _LOGGER.error("could not get information about the deployment... skipping cleaning hosts")
             self._lock.release()
             return False, "could not get information about the deployment"
-
-	for f in host_list:
-	    if f not in new_hosts_info.keys():
-		_LOGGER.error("tried to clean a host that is not in the deployment (%s)" % f)
-		self._lock.release()
-	        return False, "host %s is not in the deployment" % f
+        
+        for f in host_list:
+            if f not in new_hosts_info.keys():
+                _LOGGER.error("tried to clean a host that is not in the deployment (%s)" % f)
+                self._lock.release()
+                return False, "host %s is not in the deployment" % f
 
         forcing_hosts_fixed = [ f for f in new_hosts_info.keys() if f not in host_list ]
         if override_fixed_vms:
@@ -513,8 +512,8 @@ class Daemon(object):
         
     def loop(self):
         cpyutils.eventloop.create_eventloop(True)
-	if config.config_vmca.ENABLE_DEFRAGGER:
-	        cpyutils.eventloop.get_eventloop().add_periodical_event(config.config_vmca.DEFRAGGER_FREQUENCY, -config.config_vmca.DEFRAGGER_FREQUENCY, "defrag", callback = self.defrag, arguments = [], stealth = True)
-	else:
-		_LOGGER.warning("automatic defragger is disabled. VMCA will only server to evacuate nodes")
+        if config.config_vmca.ENABLE_DEFRAGGER:
+            cpyutils.eventloop.get_eventloop().add_periodical_event(config.config_vmca.DEFRAGGER_FREQUENCY, -config.config_vmca.DEFRAGGER_FREQUENCY, "defrag", callback = self.defrag, arguments = [], stealth = True)
+        else:
+            _LOGGER.warning("automatic defragger is disabled. VMCA will only server to evacuate nodes")
         cpyutils.eventloop.get_eventloop().loop()
