@@ -277,7 +277,7 @@ class MigrationPlan():
                 if next_program is None:
                     next_program = config.config_vmca.MIGRATION_PLAN_FREQUENCY
                 next_program = min(next_program, config.config_vmca.MIGRATION_PLAN_FREQUENCY)
-                self._migration_event = cpyutils.eventloop.get_eventloop().add_event(next_program, "Migration plan", callback = self._execute_event, arguments = [], stealth = False)
+                self._migration_event = cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event(next_program, description = "Migration plan", callback = self._execute_event, mute = False))
                 
     def _migrate_next_vm(self):
         next_migration = self._get_next_migration(True)
