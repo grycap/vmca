@@ -513,7 +513,8 @@ class Daemon(object):
     def loop(self):
         cpyutils.eventloop.create_eventloop(True)
         if config.config_vmca.ENABLE_DEFRAGGER:
-            cpyutils.eventloop.get_eventloop().add_periodical_event(config.config_vmca.DEFRAGGER_FREQUENCY, -config.config_vmca.DEFRAGGER_FREQUENCY, "defrag", callback = self.defrag, arguments = [], stealth = True)
+            # cpyutils.eventloop.get_eventloop().add_periodical_event(config.config_vmca.DEFRAGGER_FREQUENCY, -config.config_vmca.DEFRAGGER_FREQUENCY, "defrag", callback = self.defrag, arguments = [], stealth = True)
+            cpyutils.eventloop.get_eventloop().add_event(cpyutils.eventloop.Event_Periodical(0, config.config_vmca.DEFRAGGER_FREQUENCY, description = "defrag", callback = self.defrag, mute = True))
         else:
             _LOGGER.warning("automatic defragger is disabled. VMCA will only server to evacuate nodes")
         cpyutils.eventloop.get_eventloop().loop()

@@ -32,5 +32,5 @@ setup(name='VMCA',
       packages = [ 'vmca' ],
       package_dir = { 'vmca' : '.'},
       download_url = 'https://github.com/grycap/vmca',
-      install_requires = [ 'cpyutils >= 0.01' ]
+      install_requires = [ 'cpyutils >= 0.23' ]
 )
