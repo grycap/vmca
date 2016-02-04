@@ -155,3 +155,44 @@ class Defragger_FF(defragger.Defragger_Base):
                 continue_moving = (len(filtered_hosts_to_empty) != 0) 
 
         return migration_plan
+    
+class Defragger_Distribute(defragger.Defragger_Base):
+    
+    def defrag(self, _hosts_info, hosts_fixed = [], fixed_vms = []):
+        # First of all we create a copy to not to modify the original structure
+        hosts_info = _hosts_info.clone()
+        hosts_info.normalize_resources()
+        
+        hosts_to_empty = [ x for x in _hosts_info.keys() if x not in hosts_fixed ]
+        
+        migration_plan = []
+        
+        # * 1 we filter the list to remove those hosts that are disabled in config, etc.
+        filtered_hosts_to_empty = self.filter_hosts_to_empty(hosts_info, hosts_to_empty, fixed_vms)
+        filtered_destination_candidate_hosts = self.prefilter_possible_destinations(hosts_info)
+
+        iteration = 0
+        continue_moving = True
+
+        # TODO:
+        # basicamente habria que hacer lo siguiente:
+        '''
+        
+        1. calcular el "indice de estabilidad" para todos los nodos
+        2. coger el nodo mas desfavorable
+        3. coger la maquina que quitandola conseguiriamos mas estabilidad en el nodo
+        4. planificarla en otro nodo
+        5. ver que indice de estabilidad se consigue
+        6. si seria peor, finalizamos
+        
+        Este algoritmo se puede refinar, evidentemente... es solo la primera aproximacion
+        * variaciones:
+            - probar distintas maquinas del nodo y ver cual consigue mas mejora de la situacion
+                (best-fit de maquinas)
+            - empezar por distintos nodos
+                (best-fit de nodos)
+                + este se podria combinar con el anterior
+        
+        '''
+
+        return migration_plan
