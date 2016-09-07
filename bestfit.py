@@ -19,6 +19,7 @@
 import defragger
 import firstfit
 import logging
+import math
 
 class MigrationList_Length():
     def _reevaluate_migration_lists(self, hosts_info, possible_migration_lists):
@@ -180,3 +181,76 @@ class Defragger_BFd_Cost_per_Reward(Defragger_BF_Cost_per_Reward):
     def _best_fit_migration(self, hosts_info, possible_migration_list):
         return Defragger_BF_Cost_per_Reward._best_fit_migration(self, hosts_info, possible_migration_list, True)
     
+class Defragger_Distribute(defragger.Defragger_Base):
+    def _migration_enhancement(self, r_mean, hosts_info, h_id, res_amount):
+        free_before = hosts_info.euclid_normalized_resources_free(h_id)
+        distance_to_mean_before = math.fabs(r_mean - free_before)
+        distance_to_mean_after = math.fabs(r_mean - (free_before + res_amount))
+        return distance_to_mean_before - distance_to_mean_after
+
+    def defrag(self, _hosts_info, hosts_fixed = [], fixed_vms = []):
+        hosts_info = _hosts_info.clone()
+        hosts_info.normalize_resources()
+        hosts_to_empty = [ x for x in _hosts_info.keys() if x not in hosts_fixed ]
+        
+        migration_plan = []
+        
+        # * 1 we filter the list to remove those hosts that are disabled in config, etc.
+        filtered_hosts_to_empty = self.filter_hosts_to_empty(hosts_info, hosts_to_empty, fixed_vms)
+        filtered_destination_candidate_hosts = self.prefilter_possible_destinations(hosts_info)
+
+        # Now we'll calculate the mean of free resources (we want to homogeinize the distance to the mean)
+        r_total = 0.0
+        n_count = float(len(hosts_info.keys()))
+        for h_id in hosts_info.keys():
+            r_total += float(hosts_info.euclid_normalized_resources_free(h_id))
+
+        r_mean = r_total / n_count
+
+        possible_migrable_vm = []
+        for h_id, host in hosts_info.items():
+            for vm in host.vm_list[:]:
+                if vm.id not in fixed_vms:
+                    vm_norm_res = hosts_info.calculate_euclid_normalized_resources(vm.memory, vm.cpu)
+                    possible_migrable_vm.append((vm, vm_norm_res))
+        
+        possible_migrable_vm = sorted(possible_migrable_vm, key = lambda x: x[1], reverse=False)
+
+        # For each VM, we'll try to find a new destination
+        continue_moving = True
+        migration_list = []
+        while continue_moving:
+            migration_selected = None
+            while (len(possible_migrable_vm) > 0) and (migration_selected is None):
+                vm, vm_norm_res = possible_migrable_vm.pop(0)
+
+                # If moving the VM puts more distance to the mean, we'll keep the VM in the host
+                if self._migration_enhancement(r_mean, hosts_info, vm.hostname, vm_norm_res) < 0:
+                    print "discarding vm", vm
+                    continue
+
+                # Now let's find one destination
+                possible_destinations = []
+                for h_id, host in hosts_info.items():
+                    if (not host.has_vm(vm)) and host.vm_can_fit(vm):
+
+                        # If moving the VM to the hosts makes that the distance to the mean is less, we'll consider the movement
+                        enhancement = self._migration_enhancement(r_mean, hosts_info, h_id, -vm_norm_res)
+                        if enhancement > 0:
+                            possible_destinations.append((h_id, float(hosts_info.euclid_normalized_resources_free(h_id)) - enhancement))
+                
+                # If moving the VM to other host enhances the distribution, we'll select the first movement
+                if len(possible_destinations) > 0:
+                    possible_destinations = sorted(possible_destinations, key = lambda x: x[1], reverse=True)
+                    (h_id, enhancement) = possible_destinations.pop(0)
+                    migration_selected = defragger.VMMigration(vm.id, vm.hostname, h_id, 0, enhancement)
+
+            if migration_selected is not None:
+                fixed_vms.append(migration_selected.vmid)
+                migration_list.append(migration_selected)
+                self._make_migrations(hosts_info, [ migration_selected ])
+            else:
+                continue_moving = False
+
+        migration_plan.append(migration_list)
+        return migration_plan

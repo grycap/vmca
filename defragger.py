@@ -87,6 +87,7 @@ class HostData:
         self.vm_list.append(vmdata)
         self.cpu_free -= vmdata.cpu
         self.memory_free -= vmdata.memory
+        return True
 
     def vm_can_fit(self, vmdata):
         """
@@ -221,6 +222,11 @@ class HostsInfo():
                 hostdata.norm_memory_total = 1.0
             
         return True
+
+    def calculate_euclid_normalized_resources(self, cpu, memory):
+        cpu_f = float(cpu) / self._max_cpu
+        mem_f = float(memory) / self._max_memory
+        return calculate_euclid_resources(mem_f, cpu_f)
 
     def euclid_normalized_resources_free(self, host_id):
         host = self._hosts_info[host_id]
