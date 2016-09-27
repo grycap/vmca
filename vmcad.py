@@ -43,8 +43,7 @@ def getmean(override_fixed_vms):
     global DAEMON
     import schedule
     import bestfit
-    class T_getmean(schedule.Scheduler_Stripping, bestfit.Defragger_BF_Cost, bestfit.Defragger_Refill): pass
-    result, explain = DAEMON.defrag_using_defragger(T_getmean(), override_fixed_vms = override_fixed_vms, can_use_empty_hosts = True)
+    result, explain = DAEMON.defrag_using_defragger(bestfit.Defragger_Refill(), override_fixed_vms = override_fixed_vms, can_use_empty_hosts = True)
     return result, explain
 
 def getinfo(csv = False):
