@@ -254,3 +254,75 @@ class Defragger_Distribute(defragger.Defragger_Base):
 
         migration_plan.append(migration_list)
         return migration_plan
+
+class Defragger_Refill(defragger.Defragger_Base):
+    def _migration_enhancement(self, r_mean, hosts_info, h_id, res_amount):
+        free_before = hosts_info.euclid_normalized_resources_free(h_id)
+        distance_to_mean_before = math.fabs(r_mean - free_before)
+        distance_to_mean_after = math.fabs(r_mean - (free_before + res_amount))
+        return distance_to_mean_before - distance_to_mean_after
+
+    def defrag(self, _hosts_info, hosts_fixed = [], fixed_vms = []):
+        hosts_info = _hosts_info.clone()
+        hosts_info.normalize_resources()
+        hosts_to_empty = [ x for x in _hosts_info.keys() if x not in hosts_fixed ]
+        
+        migration_plan = []
+        
+        # * 1 we filter the list to remove those hosts that are disabled in config, etc.
+        filtered_hosts_to_empty = self.filter_hosts_to_empty(hosts_info, hosts_to_empty, fixed_vms)
+        filtered_destination_candidate_hosts = self.prefilter_possible_destinations(hosts_info)
+
+        # Now we'll calculate the mean of free resources (we want to homogeinize the distance to the mean)
+        r_total = 0.0
+        n_count = float(len(hosts_info.keys()))
+        for h_id in hosts_info.keys():
+            r_total += float(hosts_info.euclid_normalized_resources_free(h_id))
+
+        r_mean = r_total / n_count
+
+        possible_migrable_vm = []
+        hosts_resource_info = []
+        for h_id, host in hosts_info.items():
+            hosts_resource_info.append((h_id, hosts_info.euclid_normalized_resources_free(h_id)))
+            for vm in host.vm_list[:]:
+                if vm.id not in fixed_vms:
+                    vm_norm_res = hosts_info.calculate_euclid_normalized_resources(vm.memory, vm.cpu)
+                    possible_migrable_vm.append((vm, vm_norm_res))
+        
+        migration_list = []
+        # for each host we'll try to move VMs to it, to get to the mean
+        while len(hosts_resource_info) > 0:
+            h_id, free_resources = hosts_resource_info.pop(0)
+            host = hosts_info[h_id]
+
+            continue_moving = True
+            while continue_moving:
+                possible_vms = []
+                for (vm, vm_norm_res) in possible_migrable_vm:
+                    # If moving the VM puts more distance to the mean, we'll keep the VM in the host
+                    if self._migration_enhancement(r_mean, hosts_info, vm.hostname, vm_norm_res) < 0:
+                        print "discarding vm", vm
+                        continue
+
+                    if (not host.has_vm(vm)) and host.vm_can_fit(vm):
+                        # If moving the VM to the hosts makes that the distance to the mean is less, we'll consider the movement
+                        enhancement = self._migration_enhancement(r_mean, hosts_info, h_id, -vm_norm_res)
+                        if enhancement > 0:
+                            possible_vms.append((vm, float(hosts_info.euclid_normalized_resources_free(h_id)) - enhancement))
+
+                if len(possible_vms) > 0:
+                    possible_vms = sorted(possible_vms, key = lambda x: x[1], reverse=True)
+                    (vm, enhancement) = possible_vms.pop(0)
+                    migration_selected = defragger.VMMigration(vm.id, vm.hostname, h_id, 0, enhancement)
+                    migration_list.append(migration_selected)
+                    self._make_migrations(hosts_info, [ migration_selected ])
+
+                    # Need to remove the VM from the possible migrable_vms
+                    still_being_migrable = [ (vm_s, vm_norm_res_s) for (vm_s, vm_norm_res_s) in possible_migrable_vm if vm_s.id != vm.id]
+                    possible_migrable_vm = still_being_migrable
+                else:
+                    continue_moving = False
+
+        migration_plan.append(migration_list)
+        return migration_plan

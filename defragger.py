@@ -294,7 +294,7 @@ class HostsInfo():
             
         return True
 
-    def calculate_euclid_normalized_resources(self, cpu, memory):
+    def calculate_euclid_normalized_resources(self, memory, cpu):
         cpu_f = float(cpu) / self._max_cpu
         mem_f = float(memory) / self._max_memory
         return calculate_euclid_resources(mem_f, cpu_f)
