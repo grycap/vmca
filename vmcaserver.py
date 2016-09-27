@@ -474,7 +474,7 @@ class Daemon(object):
             failed_vms = [ vmid for vmid in self._migration_plan.get_failed_migrations().keys() ]
             forcing_fixed_vms = failed_vms + self._deployment.get_locked_vms()
 
-        new_hosts_info.stabilize_vms(config.config_vmca.STABLE_TIME, host_list)
+        new_hosts_info.stabilize_vms(config.config_vmca.STABLE_TIME, new_hosts_info.keys())
         used_empty_hosts = defragger_to_use.can_use_empty_hosts_as_destination(can_use_empty_hosts)
         new_migration_plan = defragger_to_use.defrag(new_hosts_info, hosts_fixed, fixed_vms = forcing_fixed_vms)
         defragger_to_use.can_use_empty_hosts_as_destination(used_empty_hosts)
