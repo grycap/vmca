@@ -47,9 +47,12 @@ def getmean(override_fixed_vms):
     result, explain = DAEMON.defrag_using_defragger(T_getmean(), override_fixed_vms = override_fixed_vms, can_use_empty_hosts = True)
     return result, explain
 
-def getinfo():
+def getinfo(csv = False):
     global DAEMON
-    return True, DAEMON.dump_data()
+    if csv:
+        return True, DAEMON.dump_csv()
+    else:
+        return True, DAEMON.dump_data()
 
 def vmca_server_functions():
     import cpyutils.xmlrpcutils

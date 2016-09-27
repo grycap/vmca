@@ -69,7 +69,9 @@ class VMCACmdLine(CmdLineParser):
             return False, "Could not get version of VMCA (%s)" % text
 
     def info(self, result, error):
-        succeed, text = self._proxy.getinfo()
+        csv = (result.values["-c"])
+
+        succeed, text = self._proxy.getinfo(csv)
         if succeed:
             return True, text
         else:
@@ -97,7 +99,9 @@ def main_function():
                 Flag("-e", "--use-empty", desc = "Use emtpy hosts as a possible destinations")
             ]),
             Operation("version", desc = "Gets the version of the VMCA server"),
-            Operation("info", desc = "Gets the monitoring information that has the VMCA server"),
+            Operation("info", desc = "Gets the monitoring information that has the VMCA server", arguments = [
+                Flag("-c", "--csv", desc = "Gets the information in CSV format (useful for debugging purposes)")
+            ])
         ])
     p.self_service(True)
 

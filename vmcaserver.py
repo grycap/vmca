@@ -403,6 +403,7 @@ class Daemon(object):
         hosts_str = ""
         hosts_i = self._monitor.monitor()
         if hosts_i is None:
+            self._lock.release()
             return "None"
         
         for h_id, h in hosts_i.items():
@@ -419,6 +420,18 @@ class Daemon(object):
         for vmid, movement in self._migration_plan.get_failed_migrations().items():
             retval = "%s\n%s" % (retval, movement)
         
+        self._lock.release()
+        return retval
+
+    def dump_csv(self):
+        self._lock.acquire()
+        hosts_str = ""
+        hosts_i = self._monitor.monitor()
+        if hosts_i is None:
+            self._lock.release()
+            return "None"
+
+        retval = hosts_i.csv()
         self._lock.release()
         return retval
         
