@@ -39,13 +39,21 @@ def getplan():
     global DAEMON
     return True, DAEMON.get_migration_plan()
 
+def getmean(override_fixed_vms):
+    global DAEMON
+    import schedule
+    import bestfit
+    class T_getmean(schedule.Scheduler_Stripping, bestfit.Defragger_BF_Cost, bestfit.Defragger_Distribute): pass
+    result, explain = DAEMON.defrag_using_defragger(T_getmean(), override_fixed_vms = override_fixed_vms, can_use_empty_hosts = True)
+    return result, explain
+
 def getinfo():
     global DAEMON
     return True, DAEMON.dump_data()
 
 def vmca_server_functions():
     import cpyutils.xmlrpcutils
-    cpyutils.xmlrpcutils.create_xmlrpc_server_in_thread(config.config_vmca.XMLRPC_HOST, config.config_vmca.XMLRPC_PORT, [version, forcerun, getplan, cleanhosts, getinfo])
+    cpyutils.xmlrpcutils.create_xmlrpc_server_in_thread(config.config_vmca.XMLRPC_HOST, config.config_vmca.XMLRPC_PORT, [version, forcerun, getplan, cleanhosts, getinfo, getmean])
 
 def main_loop():
     DEBUG_MODE = True

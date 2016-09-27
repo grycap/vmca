@@ -34,6 +34,14 @@ class VMCACmdLine(CmdLineParser):
             return True, text
         else:
             return False, "Could not get the migration plan from VMCA (%s)" % text
+
+    def getmean(self, result, error):
+        force = (result.values["-f"])
+        succeed, text = self._proxy.getmean(force)
+        if succeed:
+            return True, text
+        else:
+            return False, "Could not get to the mean of resources using VMCA (%s)" % text
     
     def forcerun(self, result, error):
         succeed, text = self._proxy.forcerun()
@@ -78,6 +86,9 @@ def main_function():
         sys.exit(-1)
 
     p = VMCACmdLine(proxy, "vmca", desc = "The VMCA command line utility", arguments = [
+            Operation("getmean", desc = "Distributes the VMs, trying to get the hosts to the mean of used resources", arguments = [
+                Flag("-f", "--force", desc = "Force cleaning even if the host has not its VMs in a stable state")
+            ]),
             Operation("getplan", desc = "Gets the current migration plan that is being carried out in the server"),
             Operation("forcerun", desc = "Forces VMCA to analyze the platform immediately"),
             Operation("clean", desc = "Migrates all the VMs from one host", arguments = [
