@@ -52,6 +52,12 @@ SPARE_CPU = 0
 # e.g. set 50 to get 50% of real resources free when moving VMs to the host
 SPARE_CPU_PCT = 0
 
+# Weight of the memory to calculate the normalized resources
+WEIGHT_MEM = 1
+
+# Weight of the cpu to calculate the normalized resources
+WEIGHT_CPU = 1
+
 [ONE]
 # --------------------------------------------------------
 #

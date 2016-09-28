@@ -226,7 +226,6 @@ class Defragger_Distribute(defragger.Defragger_Base):
 
                 # If moving the VM puts more distance to the mean, we'll keep the VM in the host
                 if self._migration_enhancement(r_mean, hosts_info, vm.hostname, vm_norm_res) < 0:
-                    print "discarding vm", vm
                     continue
 
                 # Now let's find one destination
@@ -302,7 +301,6 @@ class Defragger_Refill(defragger.Defragger_Base):
                 for (vm, vm_norm_res) in possible_migrable_vm:
                     # If moving the VM puts more distance to the mean, we'll keep the VM in the host
                     if self._migration_enhancement(r_mean, hosts_info, vm.hostname, vm_norm_res) < 0:
-                        print "discarding vm", vm
                         continue
 
                     if (not host.has_vm(vm)) and host.vm_can_fit(vm):
