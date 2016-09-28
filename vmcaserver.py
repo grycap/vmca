@@ -403,6 +403,7 @@ class Daemon(object):
         hosts_str = ""
         hosts_i = self._monitor.monitor()
         if hosts_i is None:
+            self._lock.release()
             return "None"
         
         for h_id, h in hosts_i.items():
@@ -419,6 +420,18 @@ class Daemon(object):
         for vmid, movement in self._migration_plan.get_failed_migrations().items():
             retval = "%s\n%s" % (retval, movement)
         
+        self._lock.release()
+        return retval
+
+    def dump_csv(self):
+        self._lock.acquire()
+        hosts_str = ""
+        hosts_i = self._monitor.monitor()
+        if hosts_i is None:
+            self._lock.release()
+            return "None"
+
+        retval = hosts_i.csv()
         self._lock.release()
         return retval
         
@@ -456,6 +469,40 @@ class Daemon(object):
             # self._start_migration_plan(new_migration_plan)
                 
         self._lock.release()
+
+
+    def defrag_using_defragger(self, defragger_to_use, hosts_fixed = [], override_fixed_vms = False, can_use_empty_hosts = False):
+        _LOGGER.info("defragging using defragger \"%s\"..." % str(defragger_to_use))
+        self._lock.acquire()
+
+        new_hosts_info = self._monitor.monitor()
+        if new_hosts_info is None:
+            _LOGGER.error("could not get information about the deployment... skipping defrag")
+            self._lock.release()
+            return False, "could not get information about the deployment"
+        
+        if override_fixed_vms:
+            forcing_fixed_vms = []
+        else:
+            failed_vms = [ vmid for vmid in self._migration_plan.get_failed_migrations().keys() ]
+            forcing_fixed_vms = failed_vms + self._deployment.get_locked_vms()
+
+        new_hosts_info.stabilize_vms(config.config_vmca.STABLE_TIME, new_hosts_info.keys())
+        used_empty_hosts = defragger_to_use.can_use_empty_hosts_as_destination(can_use_empty_hosts)
+        new_migration_plan = defragger_to_use.defrag(new_hosts_info, hosts_fixed, fixed_vms = forcing_fixed_vms)
+        defragger_to_use.can_use_empty_hosts_as_destination(used_empty_hosts)
+
+        retval = ""
+        if (new_migration_plan is None) or (len(new_migration_plan) == 0):
+            _LOGGER.debug("nothing to migrate")
+            retval = "nothing to migrate"
+        else:
+            self._migration_plan.cancel()
+            self._migration_plan.start(new_migration_plan)
+            retval = "migration plan created\n%s" % str(self._migration_plan)
+
+        self._lock.release()
+        return True, retval
 
     def clean_hosts(self, host_list = [], override_fixed_vms = False, can_use_empty_hosts = False):
         _LOGGER.info("forcing cleaning hosts...")

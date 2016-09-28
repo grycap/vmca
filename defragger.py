@@ -172,6 +172,77 @@ class HostData:
 class CannotNormalizeException(Exception): pass
 
 class HostsInfo():
+    @classmethod
+    def createfromstr(_str):
+        return HostsInfo.createfromcsv(_str.split("\n"))
+    
+    @staticmethod
+    def createfromfile(fname):
+        f = open(fname, "rt")
+        h = HostsInfo.createfromcsv(f)
+        f.close()
+        return h
+    
+    @staticmethod
+    def createfromcsv(lines):
+        hosts = {}
+        for l in lines:
+            l=l.strip("\n")
+            fields = l.split(";")
+            if fields[0] == 'host':
+                hosts[fields[1]] = HostData(fields[1], float(fields[2]), float(fields[3]))
+            elif fields[0] == 'vm':
+                vm = VMData(fields[1], float(fields[2]), float(fields[3]), fields[4])
+                # Currently we are ignoring timestamp_state from CSV because we are working with the old data
+                # vm.timestamp_state = float(fields[5])
+                hosts[fields[4]].add_vm(vm)
+        return HostsInfo(hosts)
+
+    def _csv_vm(self, vm):
+        return "vm;%s;%f;%f;%s;%.2f" % (vm.id, vm.cpu, vm.memory, vm.hostname, vm.timestamp_state)
+    
+    def _csv_host(self, h):
+        retval = ""
+        for vm in h.vm_list:
+            retval="%s%s\n" % (retval, self._csv_vm(vm))
+        
+        return "host;%s;%f;%f;%d(%.0f,%.1f)\n%s" % (h.hostname, h.cpu_total, h.memory_total, len(h.vm_list), h.cpu_total-h.cpu_free, h.memory_total-h.memory_free, retval)
+
+    def csv(self, INSTANCE_TYPES = None, filename = None):
+        retval = ""
+        h_names = self._hosts_info.keys()
+        h_names.sort()
+
+        summary = ""
+        t_count = 0
+
+        for h_name in h_names:
+            retval = "%s%s" % (retval, self._csv_host(self._hosts_info[h_name]))
+            sum1 = ""
+
+            if INSTANCE_TYPES is not None:
+                t=[0]*len(INSTANCE_TYPES)
+                for vm in self._hosts_info[h_name].vm_list:
+                    i = 0
+                    for tvm in INSTANCE_TYPES:
+                        if (vm.memory == tvm.memory ) and (vm.cpu == tvm.cpu):
+                            t[i] += 1
+                            i += 1
+                sum1 = ",".join([ str(x) for x in t ])
+                summary = "%s & %s" % (summary, sum1)
+                        
+            t_count = t_count + len(self._hosts_info[h_name].vm_list)
+            
+        if INSTANCE_TYPES is not None:
+            retval = "%s\n# %d%s" % (retval, t_count, summary)
+            
+        if filename is not None:
+            f = open(filename, "wt")
+            f.write(retval)
+            f.close()
+            
+        return retval
+
     def stabilize_vms(self, min_stable_time, hosts_affected = []):
         if hosts_affected is None:
             return
@@ -223,7 +294,7 @@ class HostsInfo():
             
         return True
 
-    def calculate_euclid_normalized_resources(self, cpu, memory):
+    def calculate_euclid_normalized_resources(self, memory, cpu):
         cpu_f = float(cpu) / self._max_cpu
         mem_f = float(memory) / self._max_memory
         return calculate_euclid_resources(mem_f, cpu_f)
