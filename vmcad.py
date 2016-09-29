@@ -25,9 +25,9 @@ def version():
     from version import VERSION
     return True, VERSION
 
-def forcerun():
+def forcerun(estabilize_vms):
     global DAEMON
-    DAEMON.forcerun()
+    DAEMON.forcerun(estabilize_vms)
     return True, "run forced"
 
 def cleanhosts(nodenames=[], override=False, canuseempty=False):

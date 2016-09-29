@@ -435,7 +435,7 @@ class Daemon(object):
         self._lock.release()
         return retval
         
-    def defrag(self):
+    def defrag(self, estabilize_vms = False):
         if self._migration_plan.is_alive():
             _LOGGER.debug("migration plan is still alive... we'll skip defragging")
             return
@@ -447,6 +447,9 @@ class Daemon(object):
             self._lock.release()
             return
             
+        if estabilize_vms:
+            new_hosts_info.stabilize_vms(config.config_vmca.STABLE_TIME, new_hosts_info.keys())            
+
         # Will lock those hosts that have more than N vms
         locked_hosts = []
         for h_id, h in new_hosts_info.items():
@@ -547,9 +550,9 @@ class Daemon(object):
         self._lock.release()
         return True, retval
 
-    def forcerun(self):
+    def forcerun(self, estabilize_vms = False):
         _LOGGER.info("forcing defrag...")
-        self.defrag()
+        self.defrag(estabilize_vms)
 
     def get_migration_plan(self):
         self._lock.acquire()
