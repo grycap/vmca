@@ -44,7 +44,8 @@ class VMCACmdLine(CmdLineParser):
             return False, "Could not get to the mean of resources using VMCA (%s)" % text
     
     def forcerun(self, result, error):
-        succeed, text = self._proxy.forcerun()
+        force = (result.values["-f"])
+        succeed, text = self._proxy.forcerun(force)
         if succeed:
             return True, text
         else:
@@ -88,11 +89,10 @@ def main_function():
         sys.exit(-1)
 
     p = VMCACmdLine(proxy, "vmca", desc = "The VMCA command line utility", arguments = [
-            Operation("getmean", desc = "Distributes the VMs, trying to get the hosts to the mean of used resources", arguments = [
-                Flag("-f", "--force", desc = "Force cleaning even if the host has not its VMs in a stable state")
-            ]),
             Operation("getplan", desc = "Gets the current migration plan that is being carried out in the server"),
-            Operation("forcerun", desc = "Forces VMCA to analyze the platform immediately"),
+            Operation("forcerun", desc = "Forces VMCA to analyze the platform immediately", arguments = [
+                Flag("-f", "--force", desc = "Force run by stabilizing the VMs first"),                
+            ]),
             Operation("clean", desc = "Migrates all the VMs from one host", arguments = [
                 Argument("node", desc = "Name of the host that is going to be cleaned", mandatory = True, count = 1),
                 Flag("-f", "--force", desc = "Force cleaning even if the host has not its VMs in a stable state"),
@@ -101,7 +101,10 @@ def main_function():
             Operation("version", desc = "Gets the version of the VMCA server"),
             Operation("info", desc = "Gets the monitoring information that has the VMCA server", arguments = [
                 Flag("-c", "--csv", desc = "Gets the information in CSV format (useful for debugging purposes)")
-            ])
+            ]),
+            Operation("getmean", desc = "Distributes the VMs, trying to get the hosts to the mean of used resources", arguments = [
+                Flag("-f", "--force", desc = "Force considering fixed VMs and those that have failed")
+            ]),
         ])
     p.self_service(True)
 
