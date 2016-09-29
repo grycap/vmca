@@ -44,7 +44,8 @@ class VMCACmdLine(CmdLineParser):
             return False, "Could not get to the mean of resources using VMCA (%s)" % text
     
     def forcerun(self, result, error):
-        succeed, text = self._proxy.forcerun()
+        force = (result.values["-f"])
+        succeed, text = self._proxy.forcerun(force)
         if succeed:
             return True, text
         else:
