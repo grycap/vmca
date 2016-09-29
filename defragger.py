@@ -63,6 +63,8 @@ class HostData:
         self.norm_cpu_total = 0.0
         self.norm_memory_free = 0.0
         self.norm_memory_total = 0.0
+	self.norm_resources_free = 0.0
+	self.norm_resources_total = 0.0
         self.keywords = {}
         
     def reduce_capacity(self, cpu, memory, cpu_pct = 0, memory_pct = 0):
@@ -160,6 +162,7 @@ class HostData:
         retval = "hostname: %s; cpu: %f; memory: %d" % (self.hostname, self.cpu_free, self.memory_free)
         retval = "%s; norm_cpu: %f" % (retval, self.norm_cpu_free)
         retval = "%s; norm_memory: %f" % (retval, self.norm_memory_free)
+        retval = "%s; norm_res: %f" % (retval, self.norm_resources_free)
         return retval
     
     def clone(self):
@@ -276,6 +279,8 @@ class HostsInfo():
                 hostdata.norm_cpu_free = 0.0
                 hostdata.norm_memory_total = 0.0
                 hostdata.norm_memory_free = 0.0
+		hostdata.norm_resources_free = 0.0
+		hostdata.norm_resources_total = 0.0
     
             if self._max_cpu <= 0 or self._max_memory <= 0:
                 raise CannotNormalizeException()
@@ -285,12 +290,16 @@ class HostsInfo():
                 hostdata.norm_cpu_total = (1.0 * hostdata.cpu_total) / self._max_cpu
                 hostdata.norm_memory_free = (1.0 * hostdata.memory_free) / self._max_memory
                 hostdata.norm_memory_total = (1.0 * hostdata.memory_total) / self._max_memory
+		hostdata.norm_resources_free = self.calculate_euclid_normalized_resources(hostdata.memory_free, hostdata.cpu_free)
+		hostdata.norm_resources_total = self.calculate_euclid_normalized_resources(hostdata.memory_total, hostdata.cpu_total)
         else:
             for hostname, hostdata in self._hosts_info.items():
                 hostdata.norm_cpu_free = 1.0
                 hostdata.norm_cpu_total = 1.0
                 hostdata.norm_memory_free = 1.0
                 hostdata.norm_memory_total = 1.0
+		hostdata.norm_resources_free = 1.0
+		hostdata.norm_resources_total = 1.0
             
         return True
 

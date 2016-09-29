@@ -405,6 +405,7 @@ class Daemon(object):
         if hosts_i is None:
             self._lock.release()
             return "None"
+	hosts_i.normalize_resources()
         
         for h_id, h in hosts_i.items():
             vm_str = ""
