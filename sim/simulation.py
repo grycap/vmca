@@ -30,13 +30,16 @@ if __name__ == "__main__":
                         format='%(asctime)s: %(levelname)-8s %(message)s',
                         datefmt='%m-%d-%Y %H:%M:%S')
                         # , stream = sys.stdout)
+    cpyutils.eventloop.create_eventloop(False)
     
     p = cpyutils.parameters.CmdLineParser("vmca-simulation", desc = "The VMCA simulation utility", arguments = [
             cpyutils.parameters.Parameter("-f", "--file", desc = "CSV file to load"),
             cpyutils.parameters.Flag("--pi", "--print-initial", desc = "prints the initial configuration"),
+            cpyutils.parameters.Flag("--hi", "--hosts-initial", desc = "prints the information about hosts in initial configuration"),
             cpyutils.parameters.Flag("--si", "--summary-initial", desc = "prints the summary of the initial configuration"),
             cpyutils.parameters.Flag("--pf", "--print-final", desc = "prints the final configuration"),
             cpyutils.parameters.Flag("--sf", "--summary-final", desc = "prints the summary of the final configuration"),
+            cpyutils.parameters.Flag("--hf", "--hosts-final", desc = "prints the information about hosts in final configuration"),
             cpyutils.parameters.Parameter("-d", "--defragger", desc = "Defragger to use. Possible values: 0 = Defragger_Refill"),
         ])
     
@@ -70,6 +73,11 @@ if __name__ == "__main__":
     si = ""
     if result.values['--si']:
         si = deployment_info.fancy_dump_info()
+    hi = ""
+    if result.values['--hi']:
+        deployment_info.normalize_resources()
+        for h_id, h in deployment_info.items():
+            hi="%s%s\n" % (hi, str(h))
 
     classname = result.values['-d'][0]
 
@@ -91,7 +99,7 @@ if __name__ == "__main__":
             exit(-1)
 
     try:
-        defragger_class = getattr(sys.modules[modulename], "Defragger_Refill")
+        defragger_class = getattr(sys.modules[modulename], classname)
         defragger = defragger_class()
     except:
         print "could not use class %s" % defragger
@@ -104,6 +112,7 @@ if __name__ == "__main__":
     plan.start(new_migration_plan)
     plan.update()
     while plan._migrate_next_vm(): pass
+    deployment_info = deployment.get_info()
 
     pf = ""
     if result.values['--pf']:
@@ -113,7 +122,15 @@ if __name__ == "__main__":
     if result.values['--sf']:
         sf = deployment_info.fancy_dump_info()
 
+    hf = ""
+    if result.values['--hf']:
+        deployment_info.normalize_resources()
+        for h_id, h in deployment_info.items():
+            hf="%s%s\n" % (hf, str(h))
+
     if pi != "": print pi
     if pf != "": print pf
     if si != "": print si
     if sf != "": print sf
+    if hi != "": print hi
+    if hf != "": print hf    
