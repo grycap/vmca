@@ -129,7 +129,7 @@ class Monitor():
         self._lock.acquire()
         retval = self._deployment.migrate_vm(vmmigration.vmid, vmmigration.host_src, vmmigration.host_dst)
         if retval:
-            self._hosts_info.make_movement(vmmigration)
+            retval = self._hosts_info.make_movement(vmmigration)
         self._lock.release()
         return retval
 

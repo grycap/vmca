@@ -61,7 +61,8 @@ class Deployment(deployment.Deployment):
             return None
 
         for h in hosts:
-            if h.STATE != h.DISABLED:
+            # if h.STATE != h.DISABLED:
+            if h.STATE in [ h.MONITORING_MONITORED, h.MONITORED ]:
                 hi = HostONE(h)
                 self._hosts_info[hi.hostname] = hi
 

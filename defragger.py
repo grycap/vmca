@@ -409,10 +409,19 @@ class HostsInfo():
         h_src = vm_movement.host_src
         h_dst = vm_movement.host_dst
 
+        # Under some circumstances, one may try to move a VM from a host that has dissapeared from monitoring
+        if h_src not in self._hosts_info:
+            logging.error("host %s or host %s is not found" % (h_src))
+            return False
+
+        if h_dst not in self._hosts_info:
+            logging.error("host %s or host %s is not found" % (h_dst))
+            return False
+
         vm = self._hosts_info[h_src].get_vm_byid(vm_movement.vmid)
         if vm is None:
             logging.error("error trying to simulate movement %s could not retrieve the information about vm %s on host %s" % (vm_movement, vm_movement.vmid, h_src))
-            return
+            return False
             
         self._hosts_info[h_src].remove_vm(vm)
         self._hosts_info[h_dst].add_vm(vm)
@@ -428,6 +437,8 @@ class HostsInfo():
                 hostdata.norm_memory_free = (1.0 * hostdata.memory_free) / self._max_memory
                 hostdata.norm_memory_total = (1.0 * hostdata.memory_total) / self._max_memory
         
+        return True
+
     def dump_info(self):
         res = []
         count = 0
@@ -545,7 +556,8 @@ class Defragger_Base():
                 logging.info("%s" % vm_movement)
                 # str_before = "\n[%s] %s\n[%s] %s" % (vm_movement.host_src, hosts_info[vm_movement.host_src].norm_str(), vm_movement.host_dst, hosts_info[vm_movement.host_dst].norm_str())
                 #logging.debug("hosts before: %s" % str_before)
-                hosts_info.make_movement(vm_movement)
+                if not hosts_info.make_movement(vm_movement):
+                    return False
                 # str_after = "\n[%s] %s\n[%s] %s" % (vm_movement.host_src, hosts_info[vm_movement.host_src].norm_str(), vm_movement.host_dst, hosts_info[vm_movement.host_dst].norm_str())
                 # logging.debug("hosts after: %s" % str_after)
             return True
@@ -734,9 +746,13 @@ class Defragger_Base():
                 if (destination_host is not None):
                     vm_migration = self.evaluate_migration(hosts_info, vm, destination_host)
                     if vm_migration is not None:
-                        migration_list.append(vm_migration)
                         if make_movements:
-                            hosts_info.make_movement(vm_migration)
+                            if hosts_info.make_movement(vm_migration):
+                                migration_list.append(vm_migration)
+                            else:
+                                logging.error("could not make migration")
+                        else:
+                            migration_list.append(vm_migration)
                 else:
                     logging.debug("could not find a new place for vm %s" % vm.id)
         
