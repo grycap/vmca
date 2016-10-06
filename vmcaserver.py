@@ -204,8 +204,7 @@ class MigrationPlan():
             '''
             self._ongoing_migrations[vmmigration.vmid] = self._last_migration
             self._timestamp_last_migration = cpyutils.eventloop.now()
-            self._hosts_info.make_movement(vmmigration)
-            return True
+            return self._hosts_info.make_movement(vmmigration)
         else:
             self._failed_migrations[vmmigration.vmid] = self._last_migration
             return False
